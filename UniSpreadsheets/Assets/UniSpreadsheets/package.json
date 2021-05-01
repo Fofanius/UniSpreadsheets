@@ -1,0 +1,8 @@
+{
+    "name": "com.fofanius.unispreadsheets",
+    "displayName": "Fofanius - UniSpreadsheets",
+    "description": "Spreadsheets module.",
+    "unity": "2019.2",
+    "version": "1.0.0",
+    "branch": "upm"
+}
