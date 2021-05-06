@@ -6,7 +6,12 @@ namespace UniSpreadsheets
 {
     public static partial class ExcelSpreadsheetUtility
     {
-        public static DataTable CovertToDataTable(Array array, string tableName)
+        public static DataTable ConvertToDataTAble<T>(T[] array, string tableName)
+        {
+            return ConvertToDataTable(array, tableName);
+        }
+        
+        public static DataTable ConvertToDataTable(Array array, string tableName)
         {
             if (tableName == null) throw new ArgumentNullException(nameof(tableName));
             if (array == null) throw new ArgumentNullException(nameof(array));

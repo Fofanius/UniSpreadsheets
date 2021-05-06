@@ -1,15 +1,11 @@
 using System.Collections;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 
 namespace UniSpreadsheets.Testing
 {
     public class Sample : MonoBehaviour
     {
-        [SerializeField] private TextAsset _spreadsheet;
-        [SerializeField] private DefaultAsset _archive;
-
         [ContextMenu("Read Spreadsheet")]
         private void ReadSpreadsheet()
         {
@@ -17,10 +13,10 @@ namespace UniSpreadsheets.Testing
             {
                 var dataSet = ExcelSpreadsheetUtility.XlsxStreamToDataSet(fileStream);
 
-                var localization = ExcelSpreadsheetUtility.Deserialize(dataSet.Tables["Localization"], typeof(LocalizationItem));
+                var localization = ExcelSpreadsheetUtility.Deserialize<LocalizationItem>(dataSet.Tables["Localization"]);
                 LogCollection(localization);
 
-                var weapons = ExcelSpreadsheetUtility.Deserialize(dataSet.Tables["Weapon"], typeof(Weapon));
+                var weapons = ExcelSpreadsheetUtility.Deserialize<Weapon>(dataSet.Tables["Weapon"]);
                 LogCollection(weapons);
             }
         }

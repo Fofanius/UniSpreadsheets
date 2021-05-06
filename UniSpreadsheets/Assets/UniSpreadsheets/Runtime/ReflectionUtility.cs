@@ -8,7 +8,7 @@ namespace UniSpreadsheets
     {
         private const BindingFlags BINDING_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        public static IReadOnlyDictionary<string, FieldInfo> GetFieldsWithOverride(Type type)
+        internal static IReadOnlyDictionary<string, FieldInfo> GetFieldsWithOverride(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
 

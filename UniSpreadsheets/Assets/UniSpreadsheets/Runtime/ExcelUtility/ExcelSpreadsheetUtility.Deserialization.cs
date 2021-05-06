@@ -7,6 +7,11 @@ namespace UniSpreadsheets
 {
     public static partial class ExcelSpreadsheetUtility
     {
+        public static T[] Deserialize<T>(DataTable table)
+        {
+            return (T[]) Deserialize(table, typeof(T));
+        }
+
         public static Array Deserialize(DataTable table, Type targetType)
         {
             if (table == default) throw new ArgumentNullException(nameof(table));
@@ -100,7 +105,7 @@ namespace UniSpreadsheets
                 }
             }
         }
-        
+
         private static string ChangeDecimalSeparator(this string input)
         {
             var separator = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
