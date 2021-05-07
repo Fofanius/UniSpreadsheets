@@ -249,5 +249,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 326ca75c9b944b145b884334ac997701, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _spreadsheet: {fileID: 0}
-  _archive: {fileID: 102900000, guid: 677242743ab926048b168295b8edbfc3, type: 3}
+  _sampleSpreadsheet: {fileID: 1163735046976709471, guid: 677242743ab926048b168295b8edbfc3, type: 3}
