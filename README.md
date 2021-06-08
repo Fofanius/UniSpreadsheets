@@ -1,5 +1,9 @@
 # UniSpreadsheets
 
+## Docs
+
+[Package docs](UniSpreadsheets/Assets/UniSpreadsheets/README.md)
+
 ## Install
 
 ```
