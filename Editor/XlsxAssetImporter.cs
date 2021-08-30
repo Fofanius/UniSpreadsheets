@@ -1,5 +1,7 @@
+using System;
 using System.IO;
 using System.Text;
+using UnityEditor;
 using UnityEditor.AssetImporters;
 using UnityEngine;
 
@@ -25,26 +27,53 @@ namespace UniSpreadsheets.Editor
 
         public override void OnImportAsset(AssetImportContext ctx)
         {
-            var bytes = File.ReadAllBytes(ctx.assetPath);
-            var xlsxAsset = XlsxAsset.Create(bytes, GetEncodingSafe());
+            var fileInfo = new FileInfo(ctx.assetPath);
 
-            var originFileName = Path.GetFileName(ctx.assetPath);
-            ctx.AddObjectToAsset($"{originFileName} - XLSX", xlsxAsset);
-            ctx.SetMainObject(xlsxAsset);
+            if (fileInfo.Name.StartsWith("~$")) return;
 
-            var dataSet = xlsxAsset.ToDataSet();
-
-            for (var i = 0; i < dataSet.Tables.Count; i++)
+            if (FileUtility.IsFileLocked(fileInfo))
             {
-                var table = dataSet.Tables[i];
+                EditorUtility.DisplayProgressBar("UniSpreadsheets", $"Wait for file \'{fileInfo.FullName}\'.", 0f);
+                FileUtility.WaitForFile(fileInfo);
+            }
 
-                var csvContent = ExcelSpreadsheetUtility.ToCsv(table);
-                var csv = new TextAsset(csvContent)
+            try
+            {
+                EditorUtility.DisplayProgressBar("UniSpreadsheets", $"Reading file \'{fileInfo.FullName}\'.", 0f);
+
+                var bytes = File.ReadAllBytes(fileInfo.FullName);
+                var xlsxAsset = XlsxAsset.Create(bytes, GetEncodingSafe());
+
+                var originFileName = Path.GetFileName(ctx.assetPath);
+                ctx.AddObjectToAsset($"{originFileName} - XLSX", xlsxAsset);
+                ctx.SetMainObject(xlsxAsset);
+
+                var dataSet = xlsxAsset.ToDataSet();
+                var count = dataSet.Tables.Count;
+
+                for (var i = 0; i < count; i++)
                 {
-                    name = table.TableName
-                };
+                    var table = dataSet.Tables[i];
 
-                ctx.AddObjectToAsset($"{originFileName} - {table.TableName}", csv);
+                    EditorUtility.DisplayProgressBar("UniSpreadsheets", $"Processing \'{table.TableName}\': \'{fileInfo.FullName}\'.", (i + 1) / (float) count);
+
+                    var csvContent = ExcelSpreadsheetUtility.ToCsv(table);
+                    var csv = new TextAsset(csvContent)
+                    {
+                        name = table.TableName
+                    };
+
+                    ctx.AddObjectToAsset($"{originFileName} - {table.TableName}", csv);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[UniSpreadsheets] Error was handled while processing \'{ctx.assetPath}\'.");
+                Debug.LogError(e);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
             }
         }
     }
