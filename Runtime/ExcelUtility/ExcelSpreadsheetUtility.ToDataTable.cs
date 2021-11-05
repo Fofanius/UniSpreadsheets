@@ -6,9 +6,9 @@ namespace UniSpreadsheets
 {
     public static partial class ExcelSpreadsheetUtility
     {
-        public static DataTable ConvertToDataTAble<T>(T[] array, string tableName)
+        public static DataTable ConvertToDataTable<T>(T[] array, string tableName)
         {
-            return ConvertToDataTable(array, tableName);
+            return ConvertToDataTable((Array)array, tableName);
         }
         
         public static DataTable ConvertToDataTable(Array array, string tableName)

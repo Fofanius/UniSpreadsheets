@@ -10,6 +10,9 @@ namespace UniSpreadsheets.Editor
     {
         private string[] _encodings;
         private SerializedProperty _encodingIndex;
+        private SerializedProperty _spreadsheetDataReceivers;
+
+        public override bool showImportedObject => false;
 
         public override void OnEnable()
         {
@@ -17,6 +20,7 @@ namespace UniSpreadsheets.Editor
 
             _encodings = Encoding.GetEncodings().Select(x => x.Name).ToArray();
             _encodingIndex = serializedObject.FindProperty("_encodingIndex");
+            _spreadsheetDataReceivers = serializedObject.FindProperty("_spreadsheetDataReceivers");
         }
 
         public override void OnInspectorGUI()
@@ -24,6 +28,7 @@ namespace UniSpreadsheets.Editor
             serializedObject.Update();
             {
                 _encodingIndex.intValue = EditorGUILayout.Popup("Encoding", _encodingIndex.intValue, _encodings);
+                EditorGUILayout.PropertyField(_spreadsheetDataReceivers);
             }
             serializedObject.ApplyModifiedProperties();
 
