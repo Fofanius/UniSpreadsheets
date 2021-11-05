@@ -19,7 +19,7 @@ namespace UniSpreadsheets
             var table = new DataTable(tableName);
 
             var type = array.GetType().GetElementType();
-            var spreadsheetFields = ReflectionUtility.GetFieldsWithOverride(type);
+            var spreadsheetFields = ReflectionUtility.GetSpreadsheetAttributeFields(type);
 
             var fields = spreadsheetFields.Keys.ToArray();
 

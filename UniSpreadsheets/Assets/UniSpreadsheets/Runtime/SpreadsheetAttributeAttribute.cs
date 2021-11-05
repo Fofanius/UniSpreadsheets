@@ -9,7 +9,7 @@ namespace UniSpreadsheets
 
         public SpreadsheetAttributeAttribute(string key)
         {
-            Key = key ?? "";
+            Key = key ?? string.Empty;
         }
     }
 }

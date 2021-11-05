@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.Text;
 using UnityEditor;
@@ -68,23 +70,53 @@ namespace UniSpreadsheets.Editor
                     context.AddObjectToAsset($"{originFileName} - {table.TableName}", csv);
                 }
 
-                for (int i = 0; i < _spreadsheetDataReceivers.Length; i++)
-                {
-                    var injectionTarget = _spreadsheetDataReceivers[i];
-                    if (injectionTarget == false) continue;
-
-                    EditorUtility.DisplayProgressBar("UniSpreadsheets", $"Injection into: {injectionTarget}", (i + 1) / (float)_spreadsheetDataReceivers.Length);
-                    (injectionTarget as IDataInjectionCallbackReceiver)?.OnBeforeDataInject();
-                    ReflectionUtility.InjectData(dataSet, injectionTarget);
-                    (injectionTarget as IDataInjectionCallbackReceiver)?.OnAfterDataInject();
-                }
+                UpdateDataReceivers(dataSet, _spreadsheetDataReceivers);
 
                 EditorUtility.ClearProgressBar();
             }
             catch (Exception e)
             {
                 Debug.LogWarning($"[UniSpreadsheets] Error was handled while processing \'{context.assetPath}\'.");
-                Debug.LogError(e);
+                Debug.LogException(e);
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+        }
+
+        public static void UpdateDataReceivers(XlsxAssetImporter importer, XlsxAsset asset)
+        {
+            UpdateDataReceivers(asset.ToDataSet(), importer._spreadsheetDataReceivers);
+        }
+
+        private static void UpdateDataReceivers(DataSet dataSet, Object[] targets)
+        {
+            if (targets == default || targets.Length == default) return;
+
+            try
+            {
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    var injectionTarget = targets[i];
+                    if (injectionTarget == false) continue;
+
+                    EditorUtility.DisplayProgressBar("UniSpreadsheets", $"Injection data into: {injectionTarget}", (i + 1) / (float)targets.Length);
+
+                    var callbackReceiver = injectionTarget as IDataInjectionCallbackReceiver;
+
+                    callbackReceiver?.OnBeforeDataInject();
+                    {
+                        ExcelSpreadsheetUtility.InjectData(dataSet, injectionTarget);
+                    }
+                    callbackReceiver?.OnAfterDataInject();
+
+                    EditorUtility.SetDirty(injectionTarget);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
             }
             finally
             {

@@ -9,12 +9,15 @@ namespace UniSpreadsheets
     {
         private const BindingFlags BINDING_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        public static IReadOnlyDictionary<string, FieldInfo> GetFieldsWithOverride(Type type)
+        /// <summary>
+        /// Находит все поля помеченные атрибутом <see cref="SpreadsheetAttributeAttribute"/>.
+        /// </summary>
+        /// <returns>Attribute -> FieldInfo</returns>
+        public static IReadOnlyDictionary<string, FieldInfo> GetSpreadsheetAttributeFields(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
 
             var result = new Dictionary<string, FieldInfo>();
-
             var fields = type.GetFields(BINDING_FLAGS);
 
             foreach (var fieldInfo in fields)
@@ -33,33 +36,31 @@ namespace UniSpreadsheets
             return result;
         }
 
-        public static void InjectData(DataSet source, UnityEngine.Object target)
+        /// <summary>
+        /// Находит все поля объекта помеченные атрибутом <see cref="SpreadsheetRangeAttribute"/>. 
+        /// </summary>
+        /// <returns>Range (лист) -> FieldInfo</returns>
+        public static IReadOnlyDictionary<string, FieldInfo> GetSpreadsheetRangeFields(Type type)
         {
-            if (source == default) throw new ArgumentNullException(nameof(source));
-            if (target == default) throw new ArgumentNullException(nameof(target));
+            if (type == null) throw new ArgumentNullException(nameof(type));
 
-            var type = target.GetType();
+            var result = new Dictionary<string, FieldInfo>();
             var fields = type.GetFields(BINDING_FLAGS);
 
-            foreach (var field in fields)
+            foreach (var fieldInfo in fields)
             {
-                var rangeAttribute = field.GetCustomAttribute<SpreadsheetRangeAttribute>();
-                if (rangeAttribute == default) continue;
+                var spreadsheetRange = fieldInfo.GetCustomAttribute<SpreadsheetRangeAttribute>();
+                if (spreadsheetRange == default) continue;
 
-                if (field.FieldType.IsArray == false) continue;
+                if (result.ContainsKey(spreadsheetRange.Name))
+                {
+                    throw new ArgumentException($"[UniSpreadsheets] {type} has duplicate member name: \'{spreadsheetRange.Name}\'.");
+                }
 
-                if (source.Tables.Contains(rangeAttribute.Name))
-                {
-                    var data = ExcelSpreadsheetUtility.Deserialize(source.Tables[rangeAttribute.Name], field.FieldType.GetElementType());
-                    field.SetValue(target, data);
-                }
-#if UNITY_EDITOR
-                else
-                {
-                    UnityEngine.Debug.LogWarning($"[UniSpreadsheets] Range \'{rangeAttribute.Name}\' doesn't exists in {source.DataSetName}.");
-                }
-#endif
+                result[spreadsheetRange.Name] = fieldInfo;
             }
+
+            return result;
         }
     }
 }

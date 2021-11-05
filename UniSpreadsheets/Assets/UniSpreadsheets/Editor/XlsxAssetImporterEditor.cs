@@ -2,6 +2,7 @@
 using System.Text;
 using UnityEditor;
 using UnityEditor.AssetImporters;
+using UnityEngine;
 
 namespace UniSpreadsheets.Editor
 {
@@ -29,6 +30,11 @@ namespace UniSpreadsheets.Editor
             {
                 _encodingIndex.intValue = EditorGUILayout.Popup("Encoding", _encodingIndex.intValue, _encodings);
                 EditorGUILayout.PropertyField(_spreadsheetDataReceivers);
+
+                if (target is XlsxAssetImporter importer && assetTarget is XlsxAsset xlsxAsset && GUILayout.Button("Force update data receivers"))
+                {
+                    XlsxAssetImporter.UpdateDataReceivers(importer, xlsxAsset);
+                }
             }
             serializedObject.ApplyModifiedProperties();
 
