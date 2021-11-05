@@ -30,7 +30,7 @@ namespace UniSpreadsheets
         {
             if (!File.Exists(filePath))
             {
-                throw new FileNotFoundException($"File doesn't exists: {filePath}", filePath);
+                throw new FileNotFoundException($"[UniSpreadsheets] File doesn't exists: {filePath}", filePath);
             }
 
             try
@@ -45,7 +45,7 @@ namespace UniSpreadsheets
             }
             catch (Exception)
             {
-                Debug.LogWarning($"Conversion to {nameof(DataSet)} failed. Path: '{filePath}'.");
+                Debug.LogWarning($"[UniSpreadsheets] Conversion to {nameof(DataSet)} failed. Path: '{filePath}'.");
                 throw;
             }
         }

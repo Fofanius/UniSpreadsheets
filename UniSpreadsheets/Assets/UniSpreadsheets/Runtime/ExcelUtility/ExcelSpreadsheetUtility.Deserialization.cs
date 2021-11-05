@@ -43,6 +43,7 @@ namespace UniSpreadsheets
             return resultArray;
         }
 
+        // TODO: refactor this
         private static void SetFieldValue(FieldInfo field, object instance, object value)
         {
             var fieldStringValue = value.ToString();
