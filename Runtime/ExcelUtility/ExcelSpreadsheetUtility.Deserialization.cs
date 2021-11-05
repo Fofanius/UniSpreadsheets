@@ -23,7 +23,7 @@ namespace UniSpreadsheets
             var attributes = rows[0].ItemArray.Where(x => x is string).Select(x => ((string) x).Split(' ')[0]).ToList();
             var resultArray = Activator.CreateInstance(targetType.MakeArrayType(), rows.Length - 1) as Array;
 
-            var fields = ReflectionUtility.GetFieldsWithOverride(targetType);
+            var fields = ReflectionUtility.GetSpreadsheetAttributeFields(targetType);
 
             for (int i = 1; i < rows.Length; i++)
             {

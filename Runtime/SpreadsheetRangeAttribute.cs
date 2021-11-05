@@ -9,7 +9,7 @@ namespace UniSpreadsheets
 
         public SpreadsheetRangeAttribute(string name)
         {
-            Name = name;
+            Name = name ?? string.Empty;
         }
     }
 }
