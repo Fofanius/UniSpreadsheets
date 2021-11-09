@@ -7,6 +7,8 @@ namespace UniSpreadsheets.Testing
     {
         [SpreadsheetRange("Localization")]
         [SerializeField] private LocalizationItem[] _localizationItems;
+        [SpreadsheetRange("Character")]
+        [SerializeField] private Character[] _characters;
 
         public void OnBeforeDataInject()
         {

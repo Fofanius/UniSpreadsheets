@@ -9,7 +9,7 @@ namespace UniSpreadsheets
     {
         public static T[] Deserialize<T>(DataTable table)
         {
-            return (T[]) Deserialize(table, typeof(T));
+            return (T[])Deserialize(table, typeof(T));
         }
 
         public static Array Deserialize(DataTable table, Type targetType)
@@ -20,7 +20,7 @@ namespace UniSpreadsheets
             var rows = table.Select();
             if (rows.Length == default) throw new Exception($"Range '{table.TableName}' is empty.");
 
-            var attributes = rows[0].ItemArray.Where(x => x is string).Select(x => ((string) x).Split(' ')[0]).ToList();
+            var attributes = rows[0].ItemArray.Where(x => x is string).Select(x => ((string)x).Split(' ')[0]).ToList();
             var resultArray = Activator.CreateInstance(targetType.MakeArrayType(), rows.Length - 1) as Array;
 
             var fields = ReflectionUtility.GetSpreadsheetAttributeFields(targetType);
@@ -56,53 +56,38 @@ namespace UniSpreadsheets
             // булевый тип данных (конвертируется из int)
             else if (field.FieldType == typeof(bool))
             {
-                if (int.TryParse(fieldStringValue, out int output))
+                if (int.TryParse(fieldStringValue, out var output))
                 {
                     field.SetValue(instance, output != 0);
                 }
                 else
                 {
-                    field.SetValue(instance, false);
+                    field.SetValue(instance, string.Equals(bool.TrueString, fieldStringValue, StringComparison.OrdinalIgnoreCase));
                 }
             }
             // дроброе число
             else if (field.FieldType == typeof(float))
             {
                 var input = fieldStringValue.ChangeDecimalSeparator();
-
-                if (float.TryParse(input, out float output))
-                {
-                    field.SetValue(instance, output);
-                }
-                else
-                {
-                    field.SetValue(instance, 0);
-                }
+                field.SetValue(instance, float.TryParse(input, out var output) ? output : 0f);
             }
             // дроброе число
             else if (field.FieldType == typeof(double))
             {
                 var input = fieldStringValue.ChangeDecimalSeparator();
-
-                if (double.TryParse(input, out double output))
-                {
-                    field.SetValue(instance, output);
-                }
-                else
-                {
-                    field.SetValue(instance, 0);
-                }
+                field.SetValue(instance, double.TryParse(input, out var output) ? output : 0d);
             }
             // целое число
             else if (field.FieldType == typeof(int))
             {
-                if (int.TryParse(fieldStringValue, out int output))
+                field.SetValue(instance, int.TryParse(fieldStringValue, out var output) ? output : 0);
+            }
+            // перечесление
+            else if (field.FieldType.IsSubclassOf(typeof(Enum)))
+            {
+                if (Enum.IsDefined(field.FieldType, fieldStringValue))
                 {
-                    field.SetValue(instance, output);
-                }
-                else
-                {
-                    field.SetValue(instance, 0);
+                    field.SetValue(instance, Enum.Parse(field.FieldType, fieldStringValue));
                 }
             }
         }
