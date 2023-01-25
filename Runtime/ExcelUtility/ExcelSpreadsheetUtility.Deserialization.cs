@@ -7,25 +7,29 @@ namespace UniSpreadsheets
 {
     public static partial class ExcelSpreadsheetUtility
     {
-        public static T[] Deserialize<T>(DataTable table)
+        public static T[] Deserialize<T>(DataTable table, uint headersRowIndex = 0, Func<string, string> tableAttributeNameProcessor = null)
         {
-            return (T[])Deserialize(table, typeof(T));
+            return (T[])Deserialize(table, typeof(T), headersRowIndex, tableAttributeNameProcessor);
         }
 
-        public static Array Deserialize(DataTable table, Type targetType)
+        public static Array Deserialize(DataTable table, Type targetType, uint headersRowIndex = 0, Func<string, string> tableAttributeNameProcessor = null)
         {
             if (table == default) throw new ArgumentNullException(nameof(table));
             if (targetType == default) throw new ArgumentNullException(nameof(targetType));
 
             var rows = table.Select();
             if (rows.Length == default) throw new Exception($"Range '{table.TableName}' is empty.");
+            var resultArrayLenght = rows.Length - 1 - headersRowIndex;
+            if (resultArrayLenght < 0) throw new ArgumentException($"Header row position is invalid for {rows.Length} rows. Headers row index: {headersRowIndex}, rows to read: {resultArrayLenght}.");
 
-            var attributes = rows[0].ItemArray.Where(x => x is string).Select(x => ((string)x).Split(' ')[0]).ToList();
-            var resultArray = Activator.CreateInstance(targetType.MakeArrayType(), rows.Length - 1) as Array;
+            tableAttributeNameProcessor ??= x => x;
+
+            var attributes = rows[headersRowIndex].ItemArray.Where(x => x is string).Select(x => tableAttributeNameProcessor((string)x)).ToList();
+            var resultArray = Array.CreateInstance(targetType, resultArrayLenght);
 
             var fields = ReflectionUtility.GetSpreadsheetAttributeFields(targetType);
 
-            for (int i = 1; i < rows.Length; i++)
+            for (int i = 0; i < resultArrayLenght; i++)
             {
                 var instance = Activator.CreateInstance(targetType);
 
@@ -33,11 +37,11 @@ namespace UniSpreadsheets
                 {
                     if (fields.TryGetValue(attributes[j], out var fieldInfo))
                     {
-                        SetFieldValue(fieldInfo, instance, rows[i].ItemArray[j]);
+                        SetFieldValue(fieldInfo, instance, rows[i + headersRowIndex + 1].ItemArray[j]);
                     }
                 }
 
-                resultArray.SetValue(instance, i - 1);
+                resultArray.SetValue(instance, i);
             }
 
             return resultArray;
