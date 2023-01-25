@@ -6,7 +6,8 @@ namespace UniSpreadsheets.Testing
     public class Weapon
     {
         [SpreadsheetAttribute("ID")] private int _id;
-        public int Damage;
+        public int Damage { get; }
+
         [SpreadsheetAttribute("Price")] private int _price;
 
         public override string ToString() => $"Weapon ID: {_id} | D -> {Damage} | Price: {_price}";
