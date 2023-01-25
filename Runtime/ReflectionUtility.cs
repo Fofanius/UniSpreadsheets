@@ -9,28 +9,32 @@ namespace UniSpreadsheets
     {
         private const BindingFlags BINDING_FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-        /// <summary>
-        /// Находит все поля помеченные атрибутом <see cref="SpreadsheetAttributeAttribute"/>.
-        /// </summary>
-        /// <returns>Attribute -> FieldInfo</returns>
-        public static IReadOnlyDictionary<string, FieldInfo> GetSpreadsheetAttributeFields(Type type)
+        public static IReadOnlyDictionary<string, MemberInfo> GetSpreadsheetAttributeMembers(Type type)
         {
             if (type == null) throw new ArgumentNullException(nameof(type));
 
-            var result = new Dictionary<string, FieldInfo>();
+            var result = new Dictionary<string, MemberInfo>();
+
             var fields = type.GetFields(BINDING_FLAGS);
+            IterateMembers(fields);
 
-            foreach (var fieldInfo in fields)
+            var properties = type.GetProperties(BINDING_FLAGS);
+            IterateMembers(properties);
+
+            void IterateMembers<T>(IEnumerable<T> members) where T : MemberInfo
             {
-                var spreadsheetAttribute = fieldInfo.GetCustomAttribute<SpreadsheetAttributeAttribute>();
-                var attributeKey = spreadsheetAttribute?.Key ?? fieldInfo.Name;
-
-                if (result.ContainsKey(attributeKey))
+                foreach (var memberInfo in members)
                 {
-                    throw new ArgumentException($"[UniSpreadsheets] {type} has duplicate member name: \'{attributeKey}\'.");
-                }
+                    var spreadsheetAttribute = memberInfo.GetCustomAttribute<SpreadsheetAttributeAttribute>();
+                    var attributeKey = spreadsheetAttribute?.Key ?? memberInfo.Name;
 
-                result[attributeKey] = fieldInfo;
+                    if (result.ContainsKey(attributeKey))
+                    {
+                        throw new ArgumentException($"[UniSpreadsheets] {type} has duplicate attribute target with name: \'{attributeKey}\'.");
+                    }
+
+                    result[attributeKey] = memberInfo;
+                }
             }
 
             return result;

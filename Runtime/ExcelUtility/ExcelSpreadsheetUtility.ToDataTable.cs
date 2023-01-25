@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 
 namespace UniSpreadsheets
 {
@@ -10,7 +11,7 @@ namespace UniSpreadsheets
         {
             return ConvertToDataTable((Array)array, tableName);
         }
-        
+
         public static DataTable ConvertToDataTable(Array array, string tableName)
         {
             if (tableName == null) throw new ArgumentNullException(nameof(tableName));
@@ -19,11 +20,11 @@ namespace UniSpreadsheets
             var table = new DataTable(tableName);
 
             var type = array.GetType().GetElementType();
-            var spreadsheetFields = ReflectionUtility.GetSpreadsheetAttributeFields(type);
+            var spreadsheetMembers = ReflectionUtility.GetSpreadsheetAttributeMembers(type);
 
-            var fields = spreadsheetFields.Keys.ToArray();
+            var columns = spreadsheetMembers.Keys.ToArray();
 
-            foreach (var field in fields)
+            foreach (var field in columns)
             {
                 table.Columns.Add(field);
             }
@@ -38,7 +39,13 @@ namespace UniSpreadsheets
                 }
                 else
                 {
-                    var values = fields.Select(x => spreadsheetFields[x].GetValue(element)).ToArray();
+                    var values = columns.Select(x => spreadsheetMembers[x] switch
+                    {
+                        FieldInfo fieldInfo => fieldInfo.GetValue(element),
+                        PropertyInfo propertyInfo => propertyInfo.GetValue(element),
+
+                        _ => default,
+                    }).ToArray();
                     table.Rows.Add(values);
                 }
             }

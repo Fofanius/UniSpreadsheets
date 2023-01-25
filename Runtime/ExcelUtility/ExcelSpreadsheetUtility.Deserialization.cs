@@ -2,6 +2,7 @@
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using UnityEngine;
 
 namespace UniSpreadsheets
 {
@@ -27,7 +28,7 @@ namespace UniSpreadsheets
             var attributes = rows[headersRowIndex].ItemArray.Where(x => x is string).Select(x => tableAttributeNameProcessor((string)x)).ToList();
             var resultArray = Array.CreateInstance(targetType, resultArrayLenght);
 
-            var fields = ReflectionUtility.GetSpreadsheetAttributeFields(targetType);
+            var members = ReflectionUtility.GetSpreadsheetAttributeMembers(targetType);
 
             for (int i = 0; i < resultArrayLenght; i++)
             {
@@ -35,9 +36,9 @@ namespace UniSpreadsheets
 
                 for (int j = 0; j < attributes.Count; j++)
                 {
-                    if (fields.TryGetValue(attributes[j], out var fieldInfo))
+                    if (members.TryGetValue(attributes[j], out var memberInfo))
                     {
-                        SetFieldValue(fieldInfo, instance, rows[i + headersRowIndex + 1].ItemArray[j]);
+                        SetMemberInfo(memberInfo, instance, rows[i + headersRowIndex + 1].ItemArray[j]);
                     }
                 }
 
@@ -47,53 +48,105 @@ namespace UniSpreadsheets
             return resultArray;
         }
 
-        // TODO: refactor this
-        private static void SetFieldValue(FieldInfo field, object instance, object value)
+        private static void SetMemberInfo(MemberInfo memberInfo, object instance, object value)
         {
-            var fieldStringValue = value.ToString();
+            switch (memberInfo)
+            {
+                case FieldInfo fieldInfo:
+                    SetFieldValue(fieldInfo, instance, value);
+                    break;
+                case PropertyInfo propertyInfo:
+                    SetPropertyValue(propertyInfo, instance, value);
+                    break;
+                default:
+                    throw new NotImplementedException($"There is no support for {memberInfo}!");
+            }
+        }
+
+        private static void SetFieldValue(FieldInfo field, object instance, object tableValue)
+        {
+            if (TryParseValue(tableValue, field.FieldType, out var value))
+            {
+                field.SetValue(instance, value);
+            }
+        }
+
+        private static void SetPropertyValue(PropertyInfo property, object instance, object tableValue)
+        {
+            if (!property.CanWrite)
+            {
+                var backingField = instance.GetType().GetField($"<{property.Name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+                if (backingField != null)
+                {
+                    SetFieldValue(backingField, instance, tableValue);
+                }
+
+                return;
+            }
+
+            if (TryParseValue(tableValue, property.PropertyType, out var value))
+            {
+                property.SetValue(instance, value);
+            }
+        }
+
+        // TODO: refactor this
+        private static bool TryParseValue(object tableValue, Type targetType, out object result)
+        {
+            result = default;
+            var fieldStringValue = tableValue.ToString();
 
             // строковый тип данных
-            if (field.FieldType == typeof(string))
+            if (targetType == typeof(string))
             {
-                field.SetValue(instance, fieldStringValue);
+                result = fieldStringValue;
+                return true;
             }
             // булевый тип данных (конвертируется из int)
-            else if (field.FieldType == typeof(bool))
+            else if (targetType == typeof(bool))
             {
                 if (int.TryParse(fieldStringValue, out var output))
                 {
-                    field.SetValue(instance, output != 0);
+                    result = output != 0;
                 }
                 else
                 {
-                    field.SetValue(instance, string.Equals(bool.TrueString, fieldStringValue, StringComparison.OrdinalIgnoreCase));
+                    result = string.Equals(bool.TrueString, fieldStringValue, StringComparison.OrdinalIgnoreCase);
                 }
+
+                return true;
             }
             // дроброе число
-            else if (field.FieldType == typeof(float))
+            else if (targetType == typeof(float))
             {
                 var input = fieldStringValue.ChangeDecimalSeparator();
-                field.SetValue(instance, float.TryParse(input, out var output) ? output : 0f);
+                result = float.TryParse(input, out var output) ? output : 0f;
+                return true;
             }
             // дроброе число
-            else if (field.FieldType == typeof(double))
+            else if (targetType == typeof(double))
             {
                 var input = fieldStringValue.ChangeDecimalSeparator();
-                field.SetValue(instance, double.TryParse(input, out var output) ? output : 0d);
+                result = double.TryParse(input, out var output) ? output : 0d;
+                return true;
             }
             // целое число
-            else if (field.FieldType == typeof(int))
+            else if (targetType == typeof(int))
             {
-                field.SetValue(instance, int.TryParse(fieldStringValue, out var output) ? output : 0);
+                result = int.TryParse(fieldStringValue, out var output) ? output : 0;
+                return true;
             }
             // перечесление
-            else if (field.FieldType.IsSubclassOf(typeof(Enum)))
+            else if (targetType.IsSubclassOf(typeof(Enum)))
             {
-                if (Enum.IsDefined(field.FieldType, fieldStringValue))
+                if (Enum.IsDefined(targetType, fieldStringValue))
                 {
-                    field.SetValue(instance, Enum.Parse(field.FieldType, fieldStringValue));
+                    result = Enum.Parse(targetType, fieldStringValue);
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private static string ChangeDecimalSeparator(this string input)
