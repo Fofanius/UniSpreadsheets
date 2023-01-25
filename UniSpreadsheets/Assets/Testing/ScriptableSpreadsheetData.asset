@@ -34,3 +34,40 @@ MonoBehaviour:
   - _key: L_Tooltip_4
     _russian: "\u041F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0430 #4"
     _english: Tooltip #4
+  _characters:
+  - ID: 1
+    HP: 100
+    Flag: 1
+    Enum: 1
+  - ID: 2
+    HP: 85
+    Flag: 1
+    Enum: 2
+  - ID: 3
+    HP: 35
+    Flag: 0
+    Enum: 0
+  - ID: 4
+    HP: 10
+    Flag: 0
+    Enum: 0
+  - ID: 5
+    HP: 5
+    Flag: 1
+    Enum: 0
+  - ID: 6
+    HP: 0
+    Flag: 1
+    Enum: 0
+  - ID: 7
+    HP: 10
+    Flag: 1
+    Enum: 0
+  - ID: 8
+    HP: 75
+    Flag: 0
+    Enum: 0
+  - ID: 0
+    HP: 50
+    Flag: 0
+    Enum: 1
