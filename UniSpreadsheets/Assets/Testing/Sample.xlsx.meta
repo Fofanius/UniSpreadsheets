@@ -8,6 +8,6 @@ ScriptedImporter:
   assetBundleName: 
   assetBundleVariant: 
   script: {fileID: 11500000, guid: ab4550bc34bf88146b6ba7bdb6e7ea93, type: 3}
-  _encodingIndex: 49
+  _encodingIndex: 38
   _spreadsheetDataReceivers:
   - {fileID: 11400000, guid: 6b91c764e8449f846a8040be9b402527, type: 2}
