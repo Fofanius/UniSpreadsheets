@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Reflection;
@@ -20,25 +21,39 @@ namespace UniSpreadsheets
 
             var rows = table.Select();
             if (rows.Length == default) throw new Exception($"Range '{table.TableName}' is empty.");
+
             var resultArrayLenght = rows.Length - 1 - headersRowIndex;
             if (resultArrayLenght < 0) throw new ArgumentException($"Header row position is invalid for {rows.Length} rows. Headers row index: {headersRowIndex}, rows to read: {resultArrayLenght}.");
 
             tableAttributeNameProcessor ??= x => x;
 
-            var attributes = rows[headersRowIndex].ItemArray.Where(x => x is string).Select(x => tableAttributeNameProcessor((string)x)).ToList();
+            var attributeToColumnIndexMap = new Dictionary<string, int>();
+
+            for (var i = 0; i < rows[headersRowIndex].ItemArray.Length; i++)
+            {
+                var headerValue = rows[headersRowIndex].ItemArray[i];
+
+                var key = headerValue?.ToString() ?? string.Empty;
+                key = tableAttributeNameProcessor(key);
+                if (string.IsNullOrWhiteSpace(key)) continue;
+
+                attributeToColumnIndexMap.TryAdd(key, i);
+            }
+
             var resultArray = Array.CreateInstance(targetType, resultArrayLenght);
 
             var members = ReflectionUtility.GetSpreadsheetAttributeMembers(targetType);
 
-            for (int i = 0; i < resultArrayLenght; i++)
+            for (var i = 0; i < resultArrayLenght; i++)
             {
                 var instance = Activator.CreateInstance(targetType);
+                var row = rows[i + headersRowIndex + 1];
 
-                for (int j = 0; j < attributes.Count; j++)
+                foreach (var attributeToColumnPair in attributeToColumnIndexMap)
                 {
-                    if (members.TryGetValue(attributes[j], out var memberInfo))
+                    if (members.TryGetValue(attributeToColumnPair.Key, out var memberInfo))
                     {
-                        SetMemberInfo(memberInfo, instance, rows[i + headersRowIndex + 1].ItemArray[j]);
+                        SetMemberInfo(memberInfo, instance, row.ItemArray[attributeToColumnPair.Value]);
                     }
                 }
 
