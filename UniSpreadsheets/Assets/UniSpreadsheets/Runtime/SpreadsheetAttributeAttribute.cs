@@ -2,7 +2,7 @@
 
 namespace UniSpreadsheets
 {
-    [AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false, Inherited = false)]
     public class SpreadsheetAttributeAttribute : Attribute
     {
         public string Key { get; }
